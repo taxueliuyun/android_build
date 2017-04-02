@@ -519,7 +519,7 @@ prebuilt_build_tools_bin := $(prebuilt_build_tools)/$(HOST_PREBUILT_TAG)/asan/bi
 endif
 ACP := $(prebuilt_build_tools_bin)/acp
 CKATI := $(prebuilt_build_tools_bin)/ckati
-IJAR := $(prebuilt_build_tools_bin)/ijar
+IJAR := $(HOST_OUT_EXECUTABLES)/ijar$(BUILD_EXECUTABLE_SUFFIX)
 MAKEPARALLEL := $(prebuilt_build_tools_bin)/makeparallel
 ZIPTIME := $(prebuilt_build_tools_bin)/ziptime
 
