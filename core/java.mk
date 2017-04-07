@@ -420,7 +420,7 @@ endif
 # This intentionally depends on java_sources, not all_java_sources.
 # Deps for generated source files must be handled separately,
 # via deps on the target that generates the sources.
-$(full_classes_compiled_jar): PRIVATE_JAVACFLAGS := $(GLOBAL_JAVAC_DEBUG_FLAGS) $(LOCAL_JAVACFLAGS)
+$(full_classes_compiled_jar): PRIVATE_JAVACFLAGS := $(GLOBAL_JAVAC_DEBUG_FLAGS) $(LOCAL_JAVACFLAGS) $(annotation_processor_flags)
 $(full_classes_compiled_jar): PRIVATE_JAR_EXCLUDE_FILES := $(LOCAL_JAR_EXCLUDE_FILES)
 $(full_classes_compiled_jar): PRIVATE_JAR_PACKAGES := $(LOCAL_JAR_PACKAGES)
 $(full_classes_compiled_jar): PRIVATE_JAR_EXCLUDE_PACKAGES := $(LOCAL_JAR_EXCLUDE_PACKAGES)
@@ -434,6 +434,8 @@ $(full_classes_compiled_jar): \
         $(RenderScript_file_stamp) \
         $(proto_java_sources_file_stamp) \
         $(LOCAL_MODULE_MAKEFILE_DEP) \
+        $(annotation_processor_deps) \
+        $(NORMALIZE_PATH) \
         $(LOCAL_ADDITIONAL_DEPENDENCIES)
 	$(transform-java-to-classes.jar)
 

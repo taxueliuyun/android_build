@@ -56,7 +56,7 @@ include $(BUILD_SYSTEM)/java_common.mk
 layers_file := $(addprefix $(LOCAL_PATH)/, $(LOCAL_JAVA_LAYERS_FILE))
 
 $(full_classes_compiled_jar): PRIVATE_JAVA_LAYERS_FILE := $(layers_file)
-$(full_classes_compiled_jar): PRIVATE_JAVACFLAGS := $(GLOBAL_JAVAC_DEBUG_FLAGS) $(LOCAL_JAVACFLAGS)
+$(full_classes_compiled_jar): PRIVATE_JAVACFLAGS := $(GLOBAL_JAVAC_DEBUG_FLAGS) $(LOCAL_JAVACFLAGS) $(annotation_processor_flags)
 $(full_classes_compiled_jar): PRIVATE_JAR_EXCLUDE_FILES :=
 $(full_classes_compiled_jar): PRIVATE_JAR_PACKAGES :=
 $(full_classes_compiled_jar): PRIVATE_JAR_EXCLUDE_PACKAGES :=
@@ -67,6 +67,8 @@ $(full_classes_compiled_jar): \
         $(jar_manifest_file) \
         $(proto_java_sources_file_stamp) \
         $(LOCAL_MODULE_MAKEFILE_DEP) \
+        $(annotation_processor_deps) \
+        $(NORMALIZE_PATH) \
         $(LOCAL_ADDITIONAL_DEPENDENCIES)
 	$(transform-host-java-to-package)
 
