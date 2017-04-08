@@ -389,6 +389,11 @@ ifdef LOCAL_RMTYPEDEFS
 $(full_classes_compiled_jar): | $(RMTYPEDEFS)
 endif
 
+# If error prone is enabled then add LOCAL_ERROR_PRONE_FLAGS to LOCAL_JAVACFLAGS
+ifeq ($(RUN_ERROR_PRONE),true)
+LOCAL_JAVACFLAGS += $(LOCAL_ERROR_PRONE_FLAGS)
+endif
+
 # Compile the java files to a .jar file.
 # This intentionally depends on java_sources, not all_java_sources.
 # Deps for generated source files must be handled separately,
