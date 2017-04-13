@@ -23,6 +23,9 @@ LOCAL_UNINSTALLABLE_MODULE := true
 LOCAL_IS_STATIC_JAVA_LIBRARY := true
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
+intermediates.COMMON := $(call local-intermediates-dir,COMMON)
+my_res_package :=
+
 # Hack to build static Java library with Android resource
 # See bug 5714516
 all_resources :=
@@ -59,16 +62,9 @@ endif
 
 LOCAL_PROGUARD_FLAGS := $(addprefix -include ,$(proguard_options_file)) $(LOCAL_PROGUARD_FLAGS)
 
-#################################
-include $(BUILD_SYSTEM)/configure_local_jack.mk
-#################################
 
-ifdef LOCAL_JACK_ENABLED
-ifndef LOCAL_JACK_PROGUARD_FLAGS
-    LOCAL_JACK_PROGUARD_FLAGS := $(LOCAL_PROGUARD_FLAGS)
-endif
-LOCAL_JACK_PROGUARD_FLAGS := $(addprefix -include ,$(proguard_options_file)) $(LOCAL_JACK_PROGUARD_FLAGS)
-endif # LOCAL_JACK_ENABLED
+R_file_stamp := $(intermediates.COMMON)/src/R.stamp
+LOCAL_INTERMEDIATE_TARGETS += $(R_file_stamp)
 
 endif  # LOCAL_RESOURCE_DIR
 
@@ -121,16 +117,23 @@ $(R_file_stamp): PRIVATE_PROGUARD_OPTIONS_FILE := $(proguard_options_file)
 $(R_file_stamp): PRIVATE_MANIFEST_PACKAGE_NAME :=
 $(R_file_stamp): PRIVATE_MANIFEST_INSTRUMENTATION_FOR :=
 
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_SOURCE_INTERMEDIATES_DIR := $(LOCAL_INTERMEDIATE_SOURCE_DIR)
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_ANDROID_MANIFEST := $(full_android_manifest)
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_RESOURCE_PUBLICS_OUTPUT := $(intermediates.COMMON)/public_resources.xml
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_RESOURCE_DIR := $(LOCAL_RESOURCE_DIR)
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_AAPT_INCLUDES := $(framework_res_package_export)
+
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_ASSET_DIR :=
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_PROGUARD_OPTIONS_FILE := $(proguard_options_file)
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_MANIFEST_PACKAGE_NAME :=
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_MANIFEST_INSTRUMENTATION_FOR :=
+
 $(R_file_stamp) : $(all_resources) $(full_android_manifest) $(AAPT) $(framework_res_package_export_deps)
 	@echo "target R.java/Manifest.java: $(PRIVATE_MODULE) ($@)"
 	$(create-resource-java-files)
 	$(hide) find $(PRIVATE_SOURCE_INTERMEDIATES_DIR) -name R.java | xargs cat > $@
 
 $(LOCAL_BUILT_MODULE): $(R_file_stamp)
-ifdef LOCAL_JACK_ENABLED
-$(noshrob_classes_jack): $(R_file_stamp)
-$(full_classes_jack): $(R_file_stamp)
-endif # LOCAL_JACK_ENABLED
 $(full_classes_compiled_jar): $(R_file_stamp)
 
 # Rule to build AAR, archive including classes.jar, resource, etc.

@@ -262,49 +262,6 @@ event_log_tags :=
 endif
 
 ###########################################################
-## .proto files: Compile proto files to .java
-###########################################################
-proto_sources := $(filter %.proto,$(LOCAL_SRC_FILES))
-# Because names of the .java files compiled from .proto files are unknown until the
-# .proto files are compiled, we use a timestamp file as depedency.
-proto_java_sources_file_stamp :=
-ifneq ($(proto_sources),)
-proto_sources_fullpath := $(addprefix $(TOP_DIR)$(LOCAL_PATH)/, $(proto_sources))
-# By putting the generated java files into $(LOCAL_INTERMEDIATE_SOURCE_DIR), they will be
-# automatically found by the java compiling function transform-java-to-classes.jar.
-ifneq ($(LOCAL_INTERMEDIATE_SOURCE_DIR),)
-proto_java_intemediate_dir := $(LOCAL_INTERMEDIATE_SOURCE_DIR)/proto
-else
-# LOCAL_INTERMEDIATE_SOURCE_DIR may be not defined in non-java modules.
-proto_java_intemediate_dir := $(intermediates)/proto
-endif
-proto_java_sources_file_stamp := $(proto_java_intemediate_dir)/Proto.stamp
-proto_java_sources_dir := $(proto_java_intemediate_dir)/src
-
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_INCLUDES := $(TOP)
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_SRC_FILES := $(proto_sources_fullpath)
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_JAVA_OUTPUT_DIR := $(proto_java_sources_dir)
-ifeq ($(LOCAL_PROTOC_OPTIMIZE_TYPE),micro)
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_JAVA_OUTPUT_OPTION := --javamicro_out
-else
-  ifeq ($(LOCAL_PROTOC_OPTIMIZE_TYPE),nano)
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_JAVA_OUTPUT_OPTION := --javanano_out
-  else
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_JAVA_OUTPUT_OPTION := --java_out
-  endif
-endif
-$(proto_java_sources_file_stamp): PRIVATE_PROTOC_FLAGS := $(LOCAL_PROTOC_FLAGS)
-$(proto_java_sources_file_stamp): PRIVATE_PROTO_JAVA_OUTPUT_PARAMS := $(LOCAL_PROTO_JAVA_OUTPUT_PARAMS)
-$(proto_java_sources_file_stamp) : $(proto_sources_fullpath) $(PROTOC)
-	$(call transform-proto-to-java)
-
-#TODO: protoc should output the dependencies introduced by imports.
-
-LOCAL_INTERMEDIATE_TARGETS += $(proto_java_sources_file_stamp)
-endif # proto_sources
-
-
-###########################################################
 ## Java: Compile .java files to .class
 ###########################################################
 #TODO: pull this into java.make once host and target are combined
@@ -382,7 +339,7 @@ endif # java_resource_file_groups
 # LOCAL_SOURCE_FILES_ALL_GENERATED is set only if the module does not have static source files,
 # but generated source files in its LOCAL_INTERMEDIATE_SOURCE_DIR.
 # You have to set up the dependency in some other way.
-need_compile_java := $(strip $(all_java_sources)$(all_res_assets)$(java_resource_sources))$(LOCAL_STATIC_JAVA_LIBRARIES)$(filter true,$(LOCAL_SOURCE_FILES_ALL_GENERATED))
+need_compile_java := $(strip $(all_java_sources)$(all_res_assets))$(LOCAL_STATIC_JAVA_LIBRARIES)$(filter true,$(LOCAL_SOURCE_FILES_ALL_GENERATED))
 ifdef need_compile_java
 
 full_static_java_libs := \
@@ -420,11 +377,10 @@ $(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_STATIC_JAVA_LIBRARIES := $(full_static_ja
 #                 be up-to-date.
 ifdef LOCAL_IS_HOST_MODULE
 ifeq ($(USE_CORE_LIB_BOOTCLASSPATH),true)
-$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_BOOTCLASSPATH := -bootclasspath $(call java-lib-files,core-libart-hostdex,$(LOCAL_IS_HOST_MODULE))
+$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_BOOTCLASSPATH := -bootclasspath $(call java-lib-deps,core-libart-hostdex,$(LOCAL_IS_HOST_MODULE))
 
 full_shared_java_libs := $(call java-lib-files,$(LOCAL_JAVA_LIBRARIES),$(LOCAL_IS_HOST_MODULE))
-full_java_lib_deps := $(call java-lib-deps,$(LOCAL_JAVA_LIBRARIES),$(LOCAL_IS_HOST_MODULE)) \
-    $(full_shared_java_libs)
+full_java_lib_deps := $(call java-lib-deps,$(LOCAL_JAVA_LIBRARIES),$(LOCAL_IS_HOST_MODULE))
 else
 $(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_BOOTCLASSPATH :=
 
