@@ -1,7 +1,12 @@
 ###########################################################
 ## Clear out values of all variables used by rule templates.
 ###########################################################
-
+LOCAL_MODULE:=
+LOCAL_MODULE_PATH:=
+LOCAL_MODULE_RELATIVE_PATH :=
+LOCAL_MODULE_STEM:=
+LOCAL_DONT_CHECK_MODULE:=
+LOCAL_CHECKED_MODULE:=
 LOCAL_32_BIT_ONLY:=
 LOCAL_AAPT_FLAGS:=
 LOCAL_AAPT_INCLUDE_ALL_RESOURCES:=
