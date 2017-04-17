@@ -63,8 +63,8 @@ HOST_CROSS_OS :=
 # We can cross-build Windows binaries on Linux
 ifeq ($(HOST_OS),linux)
 HOST_CROSS_OS := windows
-HOST_CROSS_ARCH := x86
-HOST_CROSS_2ND_ARCH := x86_64
+HOST_CROSS_ARCH := x86_64
+HOST_CROSS_2ND_ARCH := x86
 endif
 
 ifeq ($(HOST_OS),)

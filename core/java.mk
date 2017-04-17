@@ -37,26 +37,12 @@ ifneq ($(LOCAL_SDK_VERSION),)
         LOCAL_JAVA_LIBRARIES := sdk_v$(LOCAL_SDK_VERSION) $(LOCAL_JAVA_LIBRARIES)
       endif
 
-      ifeq ($(LOCAL_SDK_VERSION),current)
-        my_jack_min_sdk_version := $(PLATFORM_JACK_MIN_SDK_VERSION)
-      else ifeq ($(LOCAL_SDK_VERSION),system_current)
-        my_jack_min_sdk_version := $(PLATFORM_JACK_MIN_SDK_VERSION)
-      else ifeq ($(LOCAL_SDK_VERSION),test_current)
-        my_jack_min_sdk_version := $(PLATFORM_JACK_MIN_SDK_VERSION)
-      else
-        my_jack_min_sdk_version := $(LOCAL_SDK_VERSION)
-      endif
     endif
   endif
 else
-  my_jack_min_sdk_version := $(PLATFORM_JACK_MIN_SDK_VERSION)
   ifneq ($(LOCAL_NO_STANDARD_LIBRARIES),true)
     LOCAL_JAVA_LIBRARIES := $(TARGET_DEFAULT_JAVA_LIBRARIES) $(LOCAL_JAVA_LIBRARIES)
   endif
-endif
-
-ifneq (,$(strip $(LOCAL_MIN_SDK_VERSION)))
-  my_jack_min_sdk_version := $(LOCAL_MIN_SDK_VERSION)
 endif
 
 proto_sources := $(filter %.proto,$(LOCAL_SRC_FILES))
@@ -108,8 +94,8 @@ endif
 LOCAL_PROGUARD_ENABLED :=
 
 full_classes_compiled_jar := $(intermediates.COMMON)/$(full_classes_compiled_jar_leaf)
-full_classes_desugar_jar := $(intermediates.COMMON)/desugar.classes.jar
 jarjar_leaf := classes-jarjar.jar
+full_classes_desugar_jar := $(intermediates.COMMON)/classes-desugar.jar
 full_classes_jarjar_jar := $(intermediates.COMMON)/$(jarjar_leaf)
 emma_intermediates_dir := $(intermediates.COMMON)/emma_out
 # emma is hardcoded to use the leaf name of its input for the output file --
@@ -130,7 +116,7 @@ endif
 LOCAL_INTERMEDIATE_TARGETS += \
     $(full_classes_compiled_jar) \
     $(full_classes_jarjar_jar) \
-	$(full_classes_desugar_jar) \
+    $(full_classes_desugar_jar) \
     $(full_classes_emma_jar) \
     $(full_classes_jar) \
     $(built_dex_intermediate) \
@@ -373,9 +359,6 @@ $(error $(LOCAL_PATH): Target java module does not define any source or resource
 endif
 endif
 
-$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_JACK_MIN_SDK_VERSION := $(my_jack_min_sdk_version)
-my_jack_min_sdk_version :=
-
 # Since we're using intermediates.COMMON, make sure that it gets cleaned
 # properly.
 $(cleantarget): PRIVATE_CLEAN_FILES += $(intermediates.COMMON)
@@ -428,32 +411,20 @@ $(full_classes_compiled_jar): \
         $(LOCAL_ADDITIONAL_DEPENDENCIES)
 		$(transform-java-to-classes.jar)
 
-my_desugaring :=
-ifndef LOCAL_IS_STATIC_JAVA_LIBRARY
-my_desugaring := true
-$(full_classes_desugar_jar): PRIVATE_DX_FLAGS := $(LOCAL_DX_FLAGS)
-$(full_classes_desugar_jar): $(full_classes_compiled_jar) $(DESUGAR)
-	$(desugar-classes-jar)
-endif
-
-ifndef my_desugaring
-full_classes_desugar_jar := $(full_classes_compiled_jar)
-endif
-
 # Run jarjar if necessary, otherwise just copy the file.
 ifneq ($(strip $(LOCAL_JARJAR_RULES)),)
 $(full_classes_jarjar_jar): PRIVATE_JARJAR_RULES := $(LOCAL_JARJAR_RULES)
-$(full_classes_jarjar_jar): $(full_classes_desugar_jar) $(LOCAL_JARJAR_RULES) | $(JARJAR)
+$(full_classes_jarjar_jar): $(full_classes_compiled_jar) $(LOCAL_JARJAR_RULES) | $(JARJAR)
 	@echo JarJar: $@
 	$(hide) java -jar $(JARJAR) process $(PRIVATE_JARJAR_RULES) $< $@
 else
-$(full_classes_jarjar_jar): $(full_classes_desugar_jar) | $(ACP)
+$(full_classes_jarjar_jar): $(full_classes_compiled_jar) | $(ACP)
 	@echo Copying: $@
 	$(hide) $(ACP) -fp $< $@
 endif
 
 full_classes_jar_source := $(full_classes_jarjar_jar)
-ifndef LOCAL_JACK_ENABLED
+
 ifeq ($(LOCAL_EMMA_INSTRUMENT),true)
 $(full_classes_emma_jar): PRIVATE_EMMA_COVERAGE_FILE := $(intermediates.COMMON)/coverage.emma.ignore
 $(full_classes_emma_jar): PRIVATE_EMMA_INTERMEDIATES_DIR := $(emma_intermediates_dir)
@@ -472,7 +443,7 @@ $(full_classes_emma_jar): $(full_classes_jarjar_jar) | $(EMMA_JAR)
 	$(transform-classes.jar-to-emma)
 full_classes_jar_source := $(full_classes_emma_jar)
 endif
-endif
+
 
 # Keep a copy of the jar just before proguard processing.
 $(full_classes_jar): $(full_classes_jar_source) | $(ACP)

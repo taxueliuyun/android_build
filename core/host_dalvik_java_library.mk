@@ -36,18 +36,17 @@ ifeq ($(LOCAL_MODULE),core-libart-hostdex)
 endif
 
 full_classes_compiled_jar := $(intermediates.COMMON)/classes-full-debug.jar
-full_classes_desugar_jar := $(intermediates.COMMON)/desugar.classes.jar
 full_classes_jarjar_jar := $(intermediates.COMMON)/classes-jarjar.jar
 full_classes_jar := $(intermediates.COMMON)/classes.jar
+full_classes_desugar_jar := $(intermediates.COMMON)/classes-desugar.jar
 
 built_dex := $(intermediates.COMMON)/classes.dex
 
 LOCAL_INTERMEDIATE_TARGETS += \
     $(full_classes_compiled_jar) \
-	$(full_classes_desugar_jar) \
     $(full_classes_jarjar_jar) \
     $(full_classes_jar) \
-    $(jack_check_timestamp) \
+    $(full_classes_desugar_jar) \
     $(built_dex)
 
 # See comment in java.mk
@@ -86,26 +85,14 @@ $(full_classes_compiled_jar): \
         $(LOCAL_ADDITIONAL_DEPENDENCIES)
 	$(transform-host-java-to-package)
 	
-my_desugaring :=
-ifndef LOCAL_IS_STATIC_JAVA_LIBRARY
-my_desugaring := true
-$(full_classes_desugar_jar): PRIVATE_DX_FLAGS := $(LOCAL_DX_FLAGS)
-$(full_classes_desugar_jar): $(full_classes_compiled_jar) $(DESUGAR)
-	$(desugar-classes-jar)
-endif
-
-ifndef my_desugaring
-full_classes_desugar_jar := $(full_classes_compiled_jar)
-endif
-
 # Run jarjar if necessary, otherwise just copy the file.
 ifneq ($(strip $(LOCAL_JARJAR_RULES)),)
 $(full_classes_jarjar_jar): PRIVATE_JARJAR_RULES := $(LOCAL_JARJAR_RULES)
-$(full_classes_jarjar_jar): $(full_classes_desugar_jar) $(LOCAL_JARJAR_RULES) | $(JARJAR)
+$(full_classes_jarjar_jar): $(full_classes_compiled_jar) $(LOCAL_JARJAR_RULES) | $(JARJAR)
 	@echo JarJar: $@
 	$(hide) java -jar $(JARJAR) process $(PRIVATE_JARJAR_RULES) $< $@
 else
-$(full_classes_jarjar_jar): $(full_classes_desugar_jar) | $(ACP)
+$(full_classes_jarjar_jar): $(full_classes_compiled_jar) | $(ACP)
 	@echo Copying: $@
 	$(hide) $(ACP) -fp $< $@
 endif
