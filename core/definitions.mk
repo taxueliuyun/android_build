@@ -2211,7 +2211,7 @@ endef
 
 # $(1): A .jar file
 define desugar-classes-jar
-@echo "Desugar: $(PRIVATE_MODULE)"
+#@echo "Desugar: $(PRIVATE_MODULE)"
 @mkdir -p $(dir $(1))
 $(hide) rm -f $(dir $(1))/classes-desugar.jar
 $(hide) java -jar $(DESUGAR) \
